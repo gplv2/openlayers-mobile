@@ -1,3 +1,6 @@
+/*jslint node: true */
+"use strict";
+
 // API key for http://openlayers.org. Please get your own at
 // http://bingmapsportal.com/ and use that instead.
 var apiKey = "AqTGBsziZHIJYYxgivLBf0hVdrAk9mWO5cQcb8Yux8sW5M8c8opEC2lZqKR1ZZXf";
@@ -6,8 +9,82 @@ var apiKey = "AqTGBsziZHIJYYxgivLBf0hVdrAk9mWO5cQcb8Yux8sW5M8c8opEC2lZqKR1ZZXf";
 var map;
 var gg = new OpenLayers.Projection("EPSG:4326");
 var sm = new OpenLayers.Projection("EPSG:900913");
+var accountname="boden";
+var refresh;
+var refresh_traffic;
+var trafficlayer;
+var buslayer;
 
 var init = function (onSelectFeatureFunction) {
+
+   /* Standard traffic style */
+   var traffic_styled = new OpenLayers.Style({
+      //fillColor: "white",
+      // fillColor: "blue",
+      //pointRadius: 1,
+      //fontWeight: "normal",
+      //fontColor: "#000000",
+      fontSize: "9px",
+      strokeColor: "${color}",
+      strokeDashstyle: "${stroke}",
+      strokeWidth: 6,
+      strokeOpacity: 0.8,
+      //strokeDashstyle: 'dot',
+      //strokeLinecap: 'square',
+      pointerEvents: "visiblePainted",
+      fillOpacity: 0.5,
+      cursor: "pointer",
+      label : "${speed}Km/h",
+      //fontColor: "#333333",
+      labelOutlineColor: "yellow",
+      labelOutlineWidth: 4,
+      fontFamily: "sans-serif"
+      //fontFamily: "Courier New, monospace"
+   });
+
+   /* Hover/select traffic style */
+   var traffic_temp_styled = new OpenLayers.Style({
+      fillColor: "white",
+      strokeColor: "yellow",
+      strokeWidth: 6,
+      fontSize: "18px",
+      strokeOpacity: 0.7,
+      pointerEvents: "visiblePainted",
+      fillOpacity: 0.6,
+      cursor: "pointer",
+      label : "${speed}Km/h",
+      // label : "${speed}",
+      strokeDashstyle: "${stroke}",
+      labelOutlineColor: "white",
+      labelOutlineWidth: 4,
+      fontFamily: "sans-serif"
+      //fontFamily: "Courier New, monospace"
+   });
+
+   var traffic_style = new OpenLayers.StyleMap({
+      'default' : traffic_styled,
+      'select' : traffic_temp_styled
+   });
+
+   var protocol_traffic = new OpenLayers.Protocol.HTTP({
+         url: "http://traffic.synctrace.com/trafficgeo.json?" + Math.random(),
+            format: new OpenLayers.Format.GeoJSON({
+                  extractStyles: false,
+                  extractAttributes: true
+               })
+   });
+
+   refresh_traffic = new OpenLayers.Strategy.Refresh({force: true, active: true});
+
+   trafficlayer = new OpenLayers.Layer.Vector("Verkeer", {
+            styleMap: traffic_style,
+            // minScale: 54168.1,
+            // zoomOffset: 11, 
+            //resolutions: [38.218514137268066, 19.109257068634033, 9.554628534317017, 4.777314267158508, 2.388657133579254, 1.194328566789627, 0.5971642833948135],
+            strategies: [new OpenLayers.Strategy.Fixed(), refresh_traffic],
+            protocol: protocol_traffic
+         });
+
 
     var vector = new OpenLayers.Layer.Vector("Vector Layer", {});
 
@@ -20,6 +97,114 @@ var init = function (onSelectFeatureFunction) {
             graphicYOffset: -26
         })
     });
+
+    var lastseen_style = {
+        fillOpacity: 0.1,
+        fillColor: '#000',
+        strokeColor: '#f00',
+        strokeOpacity: 0.6
+    };
+
+   var bus_styled = new OpenLayers.Style({
+      //fillColor: "white",
+      //pointRadius: 1,
+      //fontWeight: "normal",
+      //fontColor: "#000000",
+      //fontSize: "8px",
+      strokeColor: "${speed_color}",
+      // strokeColor: "#ff9933",
+      strokeWidth: 3,
+      pointerEvents: "all",
+      fillOpacity: 0.6,
+      cursor: "pointer",
+      label : "${name}",
+      labelOutlineColor: "white",
+      labelOutlineWidth: 3,
+      fontFamily: "sans-serif"
+      //fontFamily: "Courier New, monospace"
+   });
+
+   /* Hover/select style */
+   var bus_temp_styled = new OpenLayers.Style({
+      fillColor: "white",
+      strokeColor: "#ff9933",
+      strokeWidth: 4,
+      pointerEvents: "all",
+      fillOpacity: 0.4,
+      cursor: "pointer",
+      label : "${name}",
+      labelOutlineColor: "white",
+      labelOutlineWidth: 4,
+      fontFamily: "sans-serif"
+      //fontFamily: "Courier New, monospace"
+   });
+
+   /* stylemaps */
+   var lastseen_style = new OpenLayers.StyleMap({
+      'default' : bus_styled,
+      'temporary' : bus_temp_styled
+   });
+
+   lastseen_style.styles['default'].addRules([
+      new OpenLayers.Rule({
+         maxScaleDenominator: 60000000,
+         minScaleDenominator: 433344,
+         symbolizer: {
+            fillColor: "white",
+            fontColor: "#333333",
+            fontWeight: "bolder",
+            strokeColor: "${speed_color}",
+            pointRadius: 8,
+            fontSize: "11px"
+            }
+         }),
+      new OpenLayers.Rule({
+         maxScaleDenominator: 433344,
+         minScaleDenominator: 54168,
+         symbolizer: {
+            fillColor: "orange",
+            fontColor: "#333333",
+            strokeColor: "${speed_color}",
+            fontWeight: "bolder",
+            pointRadius: 14,
+            fontSize: "10px"
+            }
+         }),
+      new OpenLayers.Rule({
+         maxScaleDenominator: 54168,
+         minScaleDenominator: 1,
+         symbolizer: {
+      cursor: "pointer",
+      label : "${speed}Km/h",
+      labelOutlineColor: "white",
+      labelOutlineWidth: 4,
+            fillColor: "#E6EA18",
+            fontColor: "#333333",
+            strokeColor: "${speed_color}",
+            fontWeight: "bolder",
+            pointRadius: 20,
+            fontSize: "8px"
+            }
+         })
+      ]);
+
+   var protocol_bus = new OpenLayers.Protocol.HTTP({
+         url: "cross/pos.php?output=kml&account=" + accountname + "&cmd=lastseen&detail=1&range=0&time=" + Math.random(),
+            format: new OpenLayers.Format.KML({
+                  extractStyles: false,
+                  extractAttributes: true
+               })
+   });
+
+    refresh = new OpenLayers.Strategy.Refresh({force: true, active: true});
+
+    buslayer = new OpenLayers.Layer.Vector("Posities", {
+            styleMap: lastseen_style,
+            //zoomOffset: 11,
+            strategies: [new OpenLayers.Strategy.Fixed(), refresh],
+            protocol: protocol_bus
+   });
+
 
     var sprinters = getFeatures();
     sprintersLayer.addFeatures(sprinters);
@@ -40,7 +225,8 @@ var init = function (onSelectFeatureFunction) {
     map = new OpenLayers.Map({
         div: "map",
         theme: null,
-        projection: sm,
+        projection: gg,
+	displayProjection: gg,
         numZoomLevels: 18,
         controls: [
             new OpenLayers.Control.Attribution(),
@@ -53,9 +239,13 @@ var init = function (onSelectFeatureFunction) {
             selectControl
         ],
         layers: [
+            new OpenLayers.Layer.OSM("OSM",["http://tc.synctrace.com:80/${z}/${x}/${y}.png"], {
+		transitionEffect: 'resize'
+		}),
             new OpenLayers.Layer.OSM("OpenStreetMap", null, {
                 transitionEffect: 'resize'
             }),
+/*
             new OpenLayers.Layer.Bing({
                 key: apiKey,
                 type: "Road",
@@ -79,12 +269,77 @@ var init = function (onSelectFeatureFunction) {
                 name: "Bing Aerial + Labels",
                 transitionEffect: 'resize'
             }),
+*/
             vector,
+	    buslayer,
             sprintersLayer
         ],
         center: new OpenLayers.LonLat(0, 0),
         zoom: 1
     });
+
+
+  /* Antwerp bounds */
+   //var lat = 51.238068;
+   //var lon = 4.411526;
+/* Antwerp bounds */
+   //var lat = 51.238068;
+   //var lon = 4.411526;
+   //var bounds = new OpenLayers.Bounds();
+   //bounds.extend(new OpenLayers.LonLat(3.54635, 51.53569));
+   //bounds.extend(new OpenLayers.LonLat(5.47995, 50.94169));
+   //var bounds = new OpenLayers.Bounds(-74.047185, 40.679648, -73.907005, 40.882078)
+   //var bounds = new OpenLayers.Bounds(-74.047185, 40.679648, -73.907005, 40.882078)
+   //var bounds = new OpenLayers.Bounds(3.54635, 51.53569, 5.47995, 50.94169);
+   //var bounds = new OpenLayers.Bounds (50.94169, 3.54635, 51.53569, 5.47995);
+
+   //var bounds = new OpenLayers.Bounds(-74.047185, 40.679648, -73.907005, 40.882078)
+   //var bounds = new OpenLayers.Bounds(-74.047185, 40.679648, -73.907005, 40.882078)
+   //var bounds = new OpenLayers.Bounds(3.54635, 51.53569, 5.47995, 50.94169);
+   //var bounds = new OpenLayers.Bounds (50.94169, 3.54635, 51.53569, 5.47995);
+
+
+   trafficlayer.setVisibility(true);
+   map.addLayer(trafficlayer);
+
+   sprintersLayer.setVisibility(false);
+   vector.setVisibility(false);
+
+  /* Now reload the data every 9 seconds */
+  setInterval(function () {
+        refresh.refresh();      
+
+        //pan to extent
+        // map.panTo(buslayer.getDataExtent().getCenterLonLat());
+  },8000);
+
+  /* Now reload the traffic data every 60 seconds */
+  setInterval(function () {
+        refresh_traffic.refresh();      
+/*
+	    var bounds = trafficlayer.getDataExtent();
+        if(bounds){
+            map.panTo(trafficlayer.getDataExtent().getCenterLonLat());
+            map.zoomToExtent(bounds, true);
+        }
+*/
+
+      map.panTo(trafficlayer.getDataExtent().getCenterLonLat());
+   //map.panTo(trafficlayer.getDataExtent().getCenterLonLat());
+   //map.zoomToExtent(bounds, true);
+
+        
+        //pan to extent
+        //map.panTo(entrancelayer.getDataExtent().getCenterLonLat());
+  },60000);
+
+/*
+	var bounds = buslayer.getDataExtent();
+       		if(bounds){
+        	map.panTo(buslayer.getDataExtent().getCenterLonLat());
+               // map.zoomToExtent(bounds, true);
+        }
+*/
 
     var style = {
         fillOpacity: 0.1,

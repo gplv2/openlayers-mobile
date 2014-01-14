@@ -30,6 +30,10 @@
                 -webkit-mask-image: url(img/list.png);
             }
 
+            img.vehicle {
+                -webkit-mask-image: url(img/list.png);
+            }
+
             .gx-layer-item {
                 margin-left: 10px;
             }
@@ -121,6 +125,20 @@
                                     });
                                 }
                                 app.popup.show('pop');
+                            }
+                        }, {
+                            iconMask: true,
+                            iconCls: "home",
+                            handler: function() {
+                                // map.zoomToExtent(buslayer.getDataExtent());
+                                // getZoomForExtent(buslayer.getDataExtent(), 'closest');
+                                // map.ZoomToExtent(trafficlayer.getDataExtent());
+                                var bounds = trafficlayer.getDataExtent();
+                                if(bounds){
+                                    map.panTo(trafficlayer.getDataExtent().getCenterLonLat());
+                                    map.zoomToExtent(bounds, false);
+                                }
+                                //map.zoomOut();
                             }
                         }]
                     }],
