@@ -9,7 +9,7 @@ var apiKey = "AqTGBsziZHIJYYxgivLBf0hVdrAk9mWO5cQcb8Yux8sW5M8c8opEC2lZqKR1ZZXf";
 var map;
 var gg = new OpenLayers.Projection("EPSG:4326");
 var sm = new OpenLayers.Projection("EPSG:900913");
-var accountname="boden";
+var accountname="peter";
 var refresh;
 var refresh_traffic;
 var trafficlayer;
@@ -34,7 +34,7 @@ var init = function (onSelectFeatureFunction) {
       pointerEvents: "visiblePainted",
       fillOpacity: 0.5,
       cursor: "pointer",
-      label : "${speed}Km/h",
+      //label : "${speed}Km/h",
       //fontColor: "#333333",
       labelOutlineColor: "yellow",
       labelOutlineWidth: 4,
@@ -52,7 +52,7 @@ var init = function (onSelectFeatureFunction) {
       pointerEvents: "visiblePainted",
       fillOpacity: 0.6,
       cursor: "pointer",
-      label : "${speed}Km/h",
+      //label : "${speed}Km/h",
       // label : "${speed}",
       strokeDashstyle: "${stroke}",
       labelOutlineColor: "white",
@@ -79,7 +79,7 @@ var init = function (onSelectFeatureFunction) {
    trafficlayer = new OpenLayers.Layer.Vector("Verkeer", {
             styleMap: traffic_style,
             // minScale: 54168.1,
-            // zoomOffset: 11, 
+            // zoomOffset: 11,
             //resolutions: [38.218514137268066, 19.109257068634033, 9.554628534317017, 4.777314267158508, 2.388657133579254, 1.194328566789627, 0.5971642833948135],
             strategies: [new OpenLayers.Strategy.Fixed(), refresh_traffic],
             protocol: protocol_traffic
@@ -189,7 +189,7 @@ var init = function (onSelectFeatureFunction) {
       ]);
 
    var protocol_bus = new OpenLayers.Protocol.HTTP({
-         url: "cross/pos.php?output=kml&account=" + accountname + "&cmd=lastseen&detail=1&range=0&time=" + Math.random(),
+         url: "pos.php?output=kml&account=" + accountname + "&cmd=lastseen&detail=1&range=0&time=" + Math.random(),
             format: new OpenLayers.Format.KML({
                   extractStyles: false,
                   extractAttributes: true
@@ -307,7 +307,7 @@ var init = function (onSelectFeatureFunction) {
 
   /* Now reload the data every 9 seconds */
   setInterval(function () {
-        refresh.refresh();      
+        refresh.refresh();
 
         //pan to extent
         // map.panTo(buslayer.getDataExtent().getCenterLonLat());
@@ -315,23 +315,23 @@ var init = function (onSelectFeatureFunction) {
 
   /* Now reload the traffic data every 60 seconds */
   setInterval(function () {
-        refresh_traffic.refresh();      
+        refresh_traffic.refresh();
 /*
-	    var bounds = trafficlayer.getDataExtent();
+        var bounds = trafficlay.getDataExtent();
         if(bounds){
             map.panTo(trafficlayer.getDataExtent().getCenterLonLat());
             map.zoomToExtent(bounds, true);
         }
-*/
 
       map.panTo(trafficlayer.getDataExtent().getCenterLonLat());
+*/
    //map.panTo(trafficlayer.getDataExtent().getCenterLonLat());
    //map.zoomToExtent(bounds, true);
 
-        
+
         //pan to extent
         //map.panTo(entrancelayer.getDataExtent().getCenterLonLat());
-  },60000);
+  },30000);
 
 /*
 	var bounds = buslayer.getDataExtent();
